@@ -1,0 +1,281 @@
+---
+title: "Assignment (un)supervized machine learning"
+author: 
+  - "Student 1 / Programme"
+  - "Student 2 / Programme"
+  - "Student 3 / Programme"
+  - "Student 4 / Programme"
+format:
+  html:
+    toc: true
+number-sections: true
+warning: false
+---
+
+# Unsupervized machine learning
+
+Download the 'regions.zip' file from the 'datasets' chapter and save it in the directory of this file ("Assignment_ML.qmd").
+
+::: {.callout-tip collapse="true" title="see code book"}
+
+Variables:
+
+* **freehms**: Gays and lesbians free to live life as they wish (1: Agree strongly; 5: Disagree strongly)
+* **hmsacld**: Gay and lesbian couples right to adopt children  (1: Agree strongly; 5: Disagree strongly)
+* **hmsfmlsh**: Ashamed if close family member gay or lesbian (1: Agree strongly; 5: Disagree strongly)
+* **eqmgmbg**: Bad or good for businesses in [country] if equal numbers of women and men are in higher management positions (0: Very bad; 6: Very good)
+* **eqpolbg**: Bad or good for politics in [country] if equal numbers of women and men are in positions of political leadership (0: Very bad; 6: Very good)
+* **eqwrkbg**: Bad or good for family life in [country] if equal numbers of women and men are in paid work (0: Very bad; 6: Very good)
+* **eqpaybg**: Bad or good for economy in [country] if women and men receive equal pay for doing the same work (0: Very bad; 6: Very good)
+* **ppltrst**: Most people can be trusted or you can't be too careful (0: You can't be too careful; 10: Most people can be trusted)
+* **pplfair**: Most people try to take advantage of you, or try to be fair (0: Most people try to take advantage of me; 10: Most people try to be fair)
+* **pplhlp**: Most of the time people helpful or mostly looking out for themselves (0: 	People mostly look out for themselve; 10: People mostly try to be helpful)
+* **trstprl**: Trust in country's parliament (0: No trust at all; 10: Complete trust)
+* **trstlgl**: Trust in the legal system (0: No trust at all; 10: Complete trust)
+* **trstplc**: Trust in the police (0: No trust at all; 10: Complete trust)
+* **trstplt**: Trust in politicians (0: No trust at all; 10: Complete trust)
+* **trstprt**: Trust in political parties (0: No trust at all; 10: Complete trust)
+* **regunit** & **region**:  **region** stipulated the region is which the respondent lives. **regunit** is the nuts level of this region.
+
+:::
+
+```{r}
+library(tidyverse)
+unzip("regions.zip") |> 
+  read_delim(col_names=TRUE,
+             delim=",",
+             progress=FALSE,
+             show_col_types = FALSE,
+             locale = readr::locale(encoding = "latin1")) |> 
+  mutate(across(c(freehms,hmsacld,hmsfmlsh),                                       ~ifelse(. > 5,NA,.)),        #(1)
+         across(c(eqmgmbg,eqpolbg,eqwrkbg,eqpaybg),                                ~ifelse(. > 6,NA,.)),        #(1)
+         across(c(trstprl,trstlgl,trstplc,trstplt,trstprt),                        ~ifelse(. > 10,NA,.))) |>    #(1) 
+  mutate(across(c(freehms,hmsacld),~ 6 - .))  |>                                                       #(2) 
+  group_by(regunit,region) |> 
+  mutate(n_resp = n()) |>                                                                                       #(3)
+  pivot_longer(-c(regunit,region,n_resp),names_to = 'var',values_to = 'val') |>                                 #(4)
+  drop_na() |>                                                                                                  #(5)
+  group_by(regunit,region,var,n_resp) |> 
+  summarise(mu = mean(val,na.rm=TRUE),
+            .groups='drop') |> 
+  pivot_wider(names_from = var,values_from = mu) ->                                                             #(6)  
+  df_regions
+
+```
+
+## Data wrangling
+
+1. Consider the code above and explain the lines that are indicated with (1) in your own words.
+
+Answer: 
+
+2. Consider the code above and explain the lines that are indicated with (2) in your own words.
+
+Answer: 
+
+3. Consider the code above and explain the lines that are indicated with (3) in your own words.
+
+Answer: 
+
+4. Consider the code above and explain the lines that are indicated with (4) in your own words.
+
+Answer: 
+
+5. Consider the code above and explain the lines that are indicated with (5) in your own words.
+
+Answer: 
+
+5. Consider the code above and explain the lines that are indicated with (5) in your own words.
+
+Answer: 
+
+## Principle component analysis
+
+1. Perform principle component analysis on the df_regions data. Write the code in chunk 'pca_chunk'.
+
+2. Discuss and decide how many principal components you wish to retain.
+
+Answer:
+
+3. Discuss how you would like to label/interpret the retained principle components.
+
+Answer:
+
+4. Do you prefer to have the observed variables standardized before running the pca? Why?
+
+Answer:
+
+<!-- Tip: Consider adding the scores of the PC's to df_regions by: -->
+
+```{r}
+#| eval: false
+#| echo: false
+
+n_pc<-3 #or any other number of PC's you want to retain
+# prcomp.res is the outcome of prcomp-function
+df_regions |> 
+  bind_cols(predict(prcomp.res, newdata = df_regions)[,1:n_pc])->
+  df_regions_pca
+```
+
+<!-- Tip: Consider making the region-column the name of the rows before running prcomp -->
+<!--        This might be helpful if you wish to make a biplot -->
+
+```{r}
+#| eval: false
+#| echo: false
+
+df_regions |> 
+  column_to_rownames("region")
+```
+
+<!-- Tip: Standardizing variables: -->
+
+```{r}
+#| eval: false
+#| echo: false
+
+df_regions |> 
+  mutate(across(c(x1,x2,...xp),~ c(scale(.))))
+```
+
+```{r, pca_chunk}
+print('hello pca')
+```
+
+## Cluster analysis
+
+1. Run k-means & hierarchical cluster analysis. Write the code in chunk 'cluster_chunk'. 
+
+2. Would you prefer to run both analyses on the retained PC's or on the original set of observed variables? Argue.
+
+Answer:
+
+3. Would you advice to standardize the observed variables before running the cluster algorithms?
+
+Answer:
+
+4. Would you advice to standardize the PC's before running the cluster algorithms?
+
+Answer:
+
+5. How many clusters of regions do you wish to retain? Argue.
+
+Answer:
+
+5. Interpret the clusters you retained.
+
+Answer:
+
+
+
+<!-- Tip: If you wish to add cluster membership to  df_regions_pca-->
+
+
+```{r}
+#| eval: false
+#| echo: false
+n_clus_hier <- 5 # or any other number of retained clusters (hierarchical)
+km               #<- outcome of a kmeans algorithm
+df_regions_pca |> 
+  mutate(cl_hierarch = cutree(hc, k = n_clus_hier),
+         cl_kmeans   = km$cluster)->
+  df_regions_pca_cl
+         
+```
+
+
+<!-- Tip: Optional: use this code for geospatial interpretation: -->
+
+
+```{r}
+#| eval: false
+#| echo: false
+#| 
+df_regions_pca_cl |> 
+  full_join(giscoR::gisco_get_nuts(nuts_level = 'all',
+                                   resolution="20",
+                                   year = 2021),
+            by=join_by(regunit==LEVL_CODE,region==NUTS_ID)) |> 
+  sf::st_as_sf() |> 
+  sf::st_crop(c(xmin = -12, ymin = -2, xmax = 56, ymax = 71)) |> 
+  group_by(CNTR_CODE) |> 
+  mutate(m = max(regunit * as.numeric(!is.na(n_resp)))) |> 
+  filter((m == 0 & regunit == min(regunit)) | (m > 0 & m == regunit)) |> 
+  ungroup() |> 
+  mutate_if(is.numeric,~round(.,2))->
+  df_pca_cl
+
+ggplot(df_pca_cl)+
+  geom_sf(aes(fill = PC1),lwd = 0)+
+  theme_bw()+
+  theme(panel.grid.minor = element_blank(), 
+        panel.grid.major = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title=element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank())
+         
+```
+
+
+
+```{r, cluster_chunk}
+print('hello cluster')
+
+```
+
+
+         
+# Supervized machine learning
+
+* Solitude detection
+* This analysis seeks to identify individuals who report to be lonely. This intrument could be used by social organisations to predict people's risk of being lonely, after completing a short questionnaire.
+
+Download the 'solitude.zip' file from the 'datasets' chapter and save it in the directory of this file ("Assignment_ML.qmd").
+
+::: {.callout-tip collapse="true" title="see code book"}
+
+Variables:
+
+* **lonely_obs** feeling lonely (0: no, 1:yes)
+* **male**: respondent is mele
+* **agea**: respondents' age
+* **mnactic**: respondents' main activity (Retired, PaidWork, Education, Unemployed, sickDisabled, Housework, Other)
+* **domicil**: respondent lives in: bigcity, countryside, suburb, town, village 
+* **hhmmb**: Number of people living regularly as member of household
+* **eduyrs**: Years of full-time education completed
+* **trust_other**: trust in other people (0: no trust, 10: a lot of trust)
+* **health**: Subjective general health (1 : very good, 5: very bad)
+* **netustm**: Internet use, how much time on typical day, in minutes
+* **aesfdrk**: Feeling of safety of walking alone in local area after dark (1: Very safe, 4: very unsafe)
+* **hlthhmp**: Hampered in daily activities by illness/disability/infirmity/mental problem (0: no, 1: yes)
+* **hincfel**: Feeling about household's income nowadays (1:	Living comfortably on present income, 4: Very difficult on present income)
+
+:::
+
+```{r}
+unzip("solitude.zip") |> 
+  read_delim(col_names=TRUE,
+             delim=",",
+             progress=FALSE,
+             show_col_types = FALSE,
+             locale = readr::locale(encoding = "latin1"))->
+  df_solitude
+
+```
+
+1. Describe the step and decisions you took when wrangling data. When there is discussion in your group about the right decision, briefly describe the different (opposing) opinions. Code this steps in the 'wrangle'-chunck.
+
+Answer: 
+
+```{r, wrangle}
+print("hello wrangle")
+```
+
+2. Split, train and assess supervised machine learning algorithms and select the best solution. Describe the different steps and decisions you took. When there is discussion in your group about the right decision, briefly describe the different (opposing) opinions. Code this steps in the 'wrangle'-chunck.
+
+```{r, ML}
+print("hello machine learning")
+```

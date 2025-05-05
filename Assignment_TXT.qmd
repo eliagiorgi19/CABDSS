@@ -1,0 +1,17 @@
+---
+title: "Assignment text analysis"
+author: 
+  - "Student 1 / Programme"
+  - "Student 2 / Programme"
+  - "Student 3 / Programme"
+  - "Student 4 / Programme"
+format:
+  html:
+    toc: true
+number-sections: true
+warning: false
+---
+
+```{r}
+str_detect(c("0460/717346"),"^04(60|[789]\\d)\\/\\d{6}$")
+```
