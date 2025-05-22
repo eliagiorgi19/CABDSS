@@ -1,7 +1,7 @@
 ---
 title: "Assignment (un)supervized machine learning"
 author: 
-  - "Student 1 / Programme"
+  - "Elia GIORGI/ Statistics and Data Science (blended)"
   - "Student 2 / Programme"
   - "Student 3 / Programme"
   - "Student 4 / Programme"
@@ -40,6 +40,21 @@ Variables:
 :::
 
 ```{r}
+# 
+# # Specify custom path to dataset here:
+# path_to_file <- "/Users/lingjong/Documents/CABDSS_Assignments/datasets/regions.csv"
+# regions_df <- read.csv(path_to_file)
+# head(regions_df)
+
+library(dplyr)
+library(factoextra)
+
+```
+
+
+
+
+```{r}
 library(tidyverse)
 unzip("regions.zip") |> 
   read_delim(col_names=TRUE,
@@ -69,41 +84,145 @@ unzip("regions.zip") |>
 
 Answer: 
 
+These lines make use of the mutate() method, along with the ifelse() method, which is applied only to the vector of dataset columns provided in the across() function as arguments, for each line. 
+While the mutate() function's goal is to transform columns of the dataset, the across() function allows one to apply a function to a subset of these columns. Note that the tilde ("~") refers to some anonymous function and the period (".") refers to the input column.
+The ifelse() method then checks a condition (e.g. . > 5, meaning "is the value strictly greater than 5?") and assigns NA if the condition is satisfied (TRUE) or leaves the value as it is otherwise.
+
 2. Consider the code above and explain the lines that are indicated with (2) in your own words.
 
 Answer: 
+
+This line applies a transformation on the columns reflecting sympathy for homosexual rights (freehms,hmsacld), which take values that are counter-intuitive to interpret (e.g.: 1= "Strongly Agree"; 5= "Strongly Disagree"). The transformation thus consists in subtracting the original value from 6, which upends the order of sympathy to make it more intuitive to interpret (e.g.: 5= "Strongly Agree"; 1= "Strongly Disagree")).
+The line concludes with a trailing pipe operator, which directs output to the following statement in the code (namely, the group_by() function).
 
 3. Consider the code above and explain the lines that are indicated with (3) in your own words.
 
 Answer: 
 
+After being organized in groups with group_by(), which groups the data by its geographic features (regunit, region), a new column, n_resp, is added to the dataset with mutate(). n_resp thus holds the number of individual respondents per region. The output is once again piped into the pivot_longer() method.
+
+
+
+
+
 4. Consider the code above and explain the lines that are indicated with (4) in your own words.
 
 Answer: 
 
+pivot_longer() reshapes the structure of the dataframe, from "wide" to "long". The vector prepended with a negative sign indicates the columns which are not subject to this alteration. All other columns are thus collapsed into 2 columns: var and val. var takes on as values the name of the variable, and var takes its corresponding value. This expectedly reduces the horizontal length of the dataset and extends its vertical length. Once again, the output is piped into the next methof, drop_na().
+
+
+
 5. Consider the code above and explain the lines that are indicated with (5) in your own words.
 
 Answer: 
 
-5. Consider the code above and explain the lines that are indicated with (5) in your own words.
+drop_na() merely removes the entries of the resulting dataframe which contain missing values (NA). This only retains valid responses from the survey.
+
+6 (sic). Consider the code above and explain the lines that are indicated with (5) in your own words.
 
 Answer: 
+
+Finally, the data is subjected to grouping once again (in the order provided: regunit,region,var,n_resp), and uses the summary() method to compute the mean (mu) for each variable for each region. After this is done, the summary statistic (=mean) that was yielded is ungrouped with .groups = 'drop': this gives a single summary statistic for each entry of the group. Ungrouping is absolutely necessary for the following step which pivots the dataframe back to a wider format (errors would occur otherwise).
+The dataframe is, as we've just announced, ultimately pivoted back to a wider form with pivot_wider(), and the variable names listed in var become once again column names.
+
 
 ## Principle component analysis
 
+
+```{r}
+head(df_regions)
+
+```
+
+
 1. Perform principle component analysis on the df_regions data. Write the code in chunk 'pca_chunk'.
+
+
+
+```{r, pca_chunk}
+print('hello pca')
+
+# We prepare the numeric data for PCA (excluding region identifiers). Note that we do not use across(), but instead we use dplyr's select and merely exclude the geographic variables that aren't relevant to standardization.
+pca_data <- df_regions |>
+  dplyr::select(-c(regunit, region, n_resp)) |> 
+  scale()  # we standardize the data except for regunit, region, n_resp
+
+# PCA:
+pca_result <- prcomp(pca_data, center = TRUE, scale. = TRUE)
+summary(pca_result)
+
+# Scree plot:
+plot(pca_result, type = "l", main = "Scree Plot of PCA")
+
+# We can look into these tables to get the proportion of variance explained by each component
+pve <- summary(pca_result)$importance[2,]
+cumulative_pve <- summary(pca_result)$importance[3,]
+print(cumulative_pve)
+# This last line lets us see the proportion of cumulative variance that is accounted for by the PCs.
+
+
+# We investigate the loadings of the PCA:
+loadings <- pca_result$rotation
+print(loadings[, 1:2])  # we only show the first 2 components
+
+
+
+fviz_pca_var(pca_result, col.var = "contrib", gradient.cols = c("blue", "orange", "red"))
+# This here is a variable correlation plot, which shows how the variables relate with one another according to the first 2 PCs (which account for 80% of the variation in data). Positively correlated covariates are grouped together and share the same direction, whereas negatively correlated covariates are on opposite quadrants. Covariates at right angles from one another may be said to exhibit "independence" from one another. The length of the arrow (which also happens to be color coded) indicates how well the variable is represented by the principal components (PC1 and PC2)
+
+
+# The following biplot serves merely as a corroborattion of these results:
+fviz_pca_biplot(pca_result, col.var = "contrib", gradient.cols = c("blue", "orange", "red"))
+
+
+```
 
 2. Discuss and decide how many principal components you wish to retain.
 
 Answer:
 
-3. Discuss how you would like to label/interpret the retained principle components.
+Looking at the scree plot, we can see that the "elbow" occurs at around the 3rd or 4th principal component. The hardest bend in the scree plot occurs when the 3rd PC is reached, therefore we could choose to retain the first 3 principal components. Altogether, they account for a cumulative variance of 87.9\% in the data. 
+
+However, a principal component's eigenvalue may be interpreted as the standard deviation in data that it can capture. Since the variables have been standardized (and thus have a variance of 1), we should retain the principal components with an eigenvalue greater than 1 and discard the others. The following snippet shows us that only the 2 first principal components yield an eigenvalue greater than 1 (6.46365775 and 3.18254447), the 3rd one falling short of 1 by a little but still significant amount (0.90210543):
+
+```{r}
+eigenvalues <- pca_result$sdev^2
+print(eigenvalues)
+```
+
+We can conclusively choose to retain only the first 2 principal components.
+
+
+3. Discuss how you would like to label/interpret the retained principal(sic) components.
 
 Answer:
+
+To appropriately interpret the retained principal components, we investigate the loadings for each one of our retained principal components:
+
+```{r}
+loadings <- pca_result$rotation
+print(loadings[, 1:2])
+
+print("Loadings for PC1:")
+sort(loadings[, "PC1"], decreasing = FALSE) # Since for PC1, all loadings have a negative sign
+print("Loadings for PC2:")
+sort(loadings[, "PC2"], decreasing = TRUE) # Since some loadings have positive signs for PC2
+```
+We can see that PC1 yields important loadings for hmsacld, hmsfmlsh, freehms, and trstprl (which are all negative, and thus indicate an inverse relation to PC1).
+
+We can see that PC2 yields important loadings for trstprt, trstplt, trstlgl, trstprl (which are all positive, and thus indicate a normal relation to PC2).
+
+Considering the transformation that occurred at #(2) for the variables freehms and hmsacld, which marked higher scores for sympathy regarding homosexual rights (i.e. right to mariage and right to have children), a negative loading would indicate opposition to that trend. PC1 thus captures a lack of sympathy with regard to homosexual rights, along with a sentiment of shame associated with homosexuality (hmsfmlsh, which wasn't transformed like the 2 previous variables but also had lower scores for higher levels of shame -> hence the negative loading), and aligns it with trust in parliament (trstprl). Overall, we can argue that PC1 captures a conservative, "traditional" line of thought with a specific focus on the question of homosexual rights in society.
+
+For PC2, the strongest positive loadings indicate trust in the institutions (political parties, politicians, legal system, parliament). PC2 may thus also be associated with a strain of conservatism, but which focuses much less on the issue of homosexuality and which follows a greater alignment with the institutions.
 
 4. Do you prefer to have the observed variables standardized before running the pca? Why?
 
+
 Answer:
+
+Yes, since different scales of magnitude for the covariates may bias the results of PCA, or at the very least make their interpretation more complicated. Some variables may have very different variances, so standardization puts them on an equal footing for principal components to capture the variation in data.
 
 <!-- Tip: Consider adding the scores of the PC's to df_regions by: -->
 
@@ -139,9 +258,6 @@ df_regions |>
   mutate(across(c(x1,x2,...xp),~ c(scale(.))))
 ```
 
-```{r, pca_chunk}
-print('hello pca')
-```
 
 ## Cluster analysis
 
