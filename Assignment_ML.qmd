@@ -191,7 +191,7 @@ eigenvalues <- pca_result$sdev^2
 print(eigenvalues)
 ```
 
-We can conclusively choose to retain only the first 2 principal components.
+We can thus conclusively choose to retain only the first 2 principal components.
 
 
 3. Discuss how you would like to label/interpret the retained principal(sic) components.
@@ -213,7 +213,7 @@ We can see that PC1 yields important loadings for hmsacld, hmsfmlsh, freehms, an
 
 We can see that PC2 yields important loadings for trstprt, trstplt, trstlgl, trstprl (which are all positive, and thus indicate a normal relation to PC2).
 
-Considering the transformation that occurred at #(2) for the variables freehms and hmsacld, which marked higher scores for sympathy regarding homosexual rights (i.e. right to mariage and right to have children), a negative loading would indicate opposition to that trend. PC1 thus captures a lack of sympathy with regard to homosexual rights, along with a sentiment of shame associated with homosexuality (hmsfmlsh, which wasn't transformed like the 2 previous variables but also had lower scores for higher levels of shame -> hence the negative loading), and aligns it with trust in parliament (trstprl). Overall, we can argue that PC1 captures a conservative, "traditional" line of thought with a specific focus on the question of homosexual rights in society.
+Considering the transformation that occurred at #(2) for the variables freehms and hmsacld, which marked higher scores for sympathy regarding homosexual rights (i.e. right to marriage and right to have children), a negative loading would indicate opposition to that trend. PC1 thus captures a lack of sympathy with regard to homosexual rights, along with a sentiment of shame associated with homosexuality (hmsfmlsh, which wasn't transformed like the 2 previous variables but also had lower scores for higher levels of shame -> hence the negative loading for hmsfmlsh), and aligns it with trust in parliament (trstprl). Overall, we can argue that PC1 captures a conservative, "traditional" line of thought with a specific focus on the question of homosexual rights in society.
 
 For PC2, the strongest positive loadings indicate trust in the institutions (political parties, politicians, legal system, parliament). PC2 may thus also be associated with a strain of conservatism, but which focuses much less on the issue of homosexuality and which follows a greater alignment with the institutions.
 
@@ -222,7 +222,7 @@ For PC2, the strongest positive loadings indicate trust in the institutions (pol
 
 Answer:
 
-Yes, since different scales of magnitude for the covariates may bias the results of PCA, or at the very least make their interpretation more complicated. Some variables may have very different variances, so standardization puts them on an equal footing for principal components to capture the variation in data.
+Yes, since different scales of magnitude for the covariates may bias the results of our PCA results, or at the very least make their interpretation more complicated. Some variables may have very different variances, so standardization puts them on an equal footing for principal components to capture the variation in data. Standardization is critical in our methodology for answering question (2), where we use the Kaiser criterion to discard principal components with eigenvalues below 1: if our data hadn't been standardized, this approach would not have been possible.
 
 <!-- Tip: Consider adding the scores of the PC's to df_regions by: -->
 
@@ -230,75 +230,63 @@ Yes, since different scales of magnitude for the covariates may bias the results
 #| eval: false
 #| echo: false
 
-n_pc<-3 #or any other number of PC's you want to retain
+n_pc<-2 #or any other number of PC's you want to retain
 # prcomp.res is the outcome of prcomp-function
 df_regions |> 
-  bind_cols(predict(prcomp.res, newdata = df_regions)[,1:n_pc])->
+  bind_cols(predict(pca_result, newdata = df_regions)[,1:n_pc])->
   df_regions_pca
 ```
 
-<!-- Tip: Consider making the region-column the name of the rows before running prcomp -->
-<!--        This might be helpful if you wish to make a biplot -->
 
-```{r}
-#| eval: false
-#| echo: false
-
-df_regions |> 
-  column_to_rownames("region")
-```
-
-<!-- Tip: Standardizing variables: -->
-
-```{r}
-#| eval: false
-#| echo: false
-
-df_regions |> 
-  mutate(across(c(x1,x2,...xp),~ c(scale(.))))
-```
 
 
 ## Cluster analysis
 
-1. Run k-means & hierarchical cluster analysis. Write the code in chunk 'cluster_chunk'. 
+1. Run k-means & hierarchical cluster analysis. Write the code in chunk 'cluster_chunk'.
+
+
 
 2. Would you prefer to run both analyses on the retained PC's or on the original set of observed variables? Argue.
 
 Answer:
 
+Before answering, it is useful to recall that the goal of these clustering procedures is to ensure that the clusters are internally homogeneous (small within variance) and externally heterogeneous (large between variance).
+
+We believe that the core advantage of PCA is that it reveals the most determinant dimensions that shape the data. While retaining but a couple of PC's obviously entails a reduction in the complexity that is characteristic to the data, it allows for us to reduce noise and only yield insights from the most uncorrelated components that account for most of the data's variation. Moreover, clustering methods only become more difficult to implement as the dimensionality in the data increase, making distance between points less capable to correctly discriminate groupings. Working on the original data with these methods allows for more noise to inform the clusters, whereas working with the principal components of the data allows for clustering to occur around its most informative structures.
+
+
 3. Would you advice to standardize the observed variables before running the cluster algorithms?
 
 Answer:
+
+Just like with PCA, standardizing the variables is important to accomplish before implementing the clustering routines. This is because our data are expressed on different scales, and these all factor into the formulas which calculate distance between points (e.g. linkage types used in hierarchical clustering). Without standardization, some variables would obviously yield a bias the computations for distance between points.
+
 
 4. Would you advice to standardize the PC's before running the cluster algorithms?
 
 Answer:
 
+No, since the standardization has already occurred before running the PCA, from which the principal components were yielded. The scale of each of the principal components should normally reflect the true magnitude of one of the uncorrelated dimensions which constitute the data, and are thus informative as such. Standardizing principal components would be ill-advised, since this would dillute the magnitude of some of these components and merely replace information with noise.
+
 5. How many clusters of regions do you wish to retain? Argue.
 
 Answer:
+
+We choose to retain 4 clusters. Our motivation lies in the "elbow" we can observe in our graph where we plot the within-cluster sum of squares (withinss) and the between-cluster sum of squares (betweenss) against the number of clusters (k). Additional clusters does not translate to substantial increase in between variance (betweenss) or to substantial decrease in within variance (withinss) 
 
 5. Interpret the clusters you retained.
 
 Answer:
 
+Looking at the k-means clustering plot across the PC1-PC2 grid, most clusters seem to aggregate in the lower quadrants, where PC2 assumes negative values. 
+
+  - Cluster 1 (in red): lower-right quadrant, groups individuals negatively associated with PC2 and positively associated with PC1, namely individuals that are strictly unsupportive of homosexuals' rights (and show little trust in institutions).
+  - Cluster 2 (in green): mostly lower-left quadrant, groups individuals associated with eq* variables, indicating support of equal treatment and opportunities for male and female sexes.
+  - Cluster 3 (in blue):  upper-right quadrant, groups individuals positively associated with both PC1 and PC2, namely individuals that are simultaneously unsupportive of homosexuals' rights and appear to trust legal/political institutions.
+  - Cluster 4 (in purple): mostly upper-left quadrant, groups individuals associated with trst* variables, indicating trust in the institutions.
 
 
-<!-- Tip: If you wish to add cluster membership to  df_regions_pca-->
-
-
-```{r}
-#| eval: false
-#| echo: false
-n_clus_hier <- 5 # or any other number of retained clusters (hierarchical)
-km               #<- outcome of a kmeans algorithm
-df_regions_pca |> 
-  mutate(cl_hierarch = cutree(hc, k = n_clus_hier),
-         cl_kmeans   = km$cluster)->
-  df_regions_pca_cl
-         
-```
+The geospatial plot shows the different levels of PC1 across the several regions listed in the dataset. One can clearly see that higher levels of PC1 are more often found in the eastern countries and regions of the EU, whereas the northernmost countries and regions appear to record the lowest levels of PC1.
 
 
 <!-- Tip: Optional: use this code for geospatial interpretation: -->
@@ -336,11 +324,115 @@ ggplot(df_pca_cl)+
 ```
 
 
-
 ```{r, cluster_chunk}
 print('hello cluster')
 
+
+# K-MEANS
+
+pca_data <- prcomp(df_regions |> dplyr::select(-c(regunit, region, n_resp)), scale. = TRUE)
+df_kmeans <- as.data.frame(pca_data$x[, 1:2])
+
+solution<-data.frame()
+for(k in 1:10){
+  solution_k<-kmeans(df_kmeans,centers = k,nstart = 25)
+  solution<-rbind(solution,tibble(k=k,
+                                  tot.withinss=solution_k$tot.withinss,
+                                  betweenss=solution_k$betweenss))
+}
+
+solution |> 
+  pivot_longer(c(tot.withinss,betweenss),
+               names_to = "stat",
+               values_to = "value") |> 
+  ggplot()+
+  geom_line(aes(x=k,y=value,color=stat))+
+  scale_x_continuous(breaks=c(1:10))
+
+
+# Again, we look for an elbow in the graph. This elbow clearly occurs at k=4. Beyond this amount of clusters, performance of k-means does not improve substantially enough by reducing variability within clusters (or, simultaneously, increasing variability between clusters): it is therefore parsimonious to set k=4.
+
+
+
+# Use top 2 PCs for clustering
+df_kmeans <- as.data.frame(pca_result$x[, 1:2])
+set.seed(1)  # We set the randomness seed reproducibility
+
+kmeans_result <- kmeans(pca_scores, centers = 4, nstart = 25)
+
+
+df_clusters <- df_regions |>
+  mutate(kmeans_cluster = factor(kmeans_result$cluster))
+
+
+# We visualize clustering results:
+
+fviz_cluster(list(data = df_kmeans, cluster = kmeans_result$cluster),
+             geom = "point", ellipse.type = "convex",
+             main = "K-means Clustering (PC1 & PC2)",
+             repel = TRUE)
+
+
+# CLUSTERING
+
+
+# Compute distance matrix
+distMatrix <- dist(df_kmeans, method = "euclidean")
+
+# Apply hierarchical clustering using Ward linkage
+hc <- hclust(distMatrix, method = "ward.D2")
+
+# Cut into 4 clusters
+hc_clusters <- cutree(hc, k = 4)
+
+# Add hierarchical cluster assignment
+df_clusters$hclust_cluster <- factor(hc_clusters)
+
+
+# Hierarchical Clustering Dendrogram plot:
+plot(hc, labels = df_regions$region,
+     main = "Hierarchical Clustering Dendrogram",
+     xlab = "", sub = "")
+rect.hclust(hc, k = 4, border = "blue")
+
+
+
+n_clus_hier <- 4 # or any other number of retained clusters (hierarchical)
+kmeans_result               #<- outcome of a kmeans algorithm
+df_regions_pca |> 
+  mutate(cl_hierarch = cutree(hc, k = n_clus_hier),
+         cl_kmeans   = kmeans_result$cluster)->
+  df_regions_pca_cl
+
+df_regions_pca_cl |> 
+  full_join(giscoR::gisco_get_nuts(nuts_level = 'all',
+                                   resolution="20",
+                                   year = 2021),
+            by=join_by(regunit==LEVL_CODE,region==NUTS_ID)) |> 
+  sf::st_as_sf() |> 
+  sf::st_crop(c(xmin = -12, ymin = -2, xmax = 56, ymax = 71)) |> 
+  group_by(CNTR_CODE) |> 
+  mutate(m = max(regunit * as.numeric(!is.na(n_resp)))) |> 
+  filter((m == 0 & regunit == min(regunit)) | (m > 0 & m == regunit)) |> 
+  ungroup() |> 
+  mutate_if(is.numeric,~round(.,2))->
+  df_pca_cl
+
+ggplot(df_pca_cl)+
+  geom_sf(aes(fill = PC1),lwd = 0)+
+  theme_bw()+
+  theme(panel.grid.minor = element_blank(), 
+        panel.grid.major = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title=element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank())
+
 ```
+
+
+
 
 
          
