@@ -1,8 +1,8 @@
 ---
 title: "Assignment (un)supervized machine learning"
 author: 
-  - "Elia GIORGI/ Statistics and Data Science (blended)"
-  - "Student 2 / Programme"
+  - "Elia Giorgi/ Statistics and Data Science (blended)"
+  - "Robin Vloeberghs / QASS"
   - "Student 3 / Programme"
   - "Student 4 / Programme"
 format:
