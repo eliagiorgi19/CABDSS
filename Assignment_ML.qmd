@@ -3,7 +3,7 @@ title: "Assignment (un)supervized machine learning"
 author: 
   - "Elia Giorgi/ Statistics and Data Science (blended)"
   - "Robin Vloeberghs / QASS"
-  - "Student 3 / Programme"
+  - "Hanqing Zhang / Statistics and Data Science (on campus)"
   - "Student 4 / Programme"
 format:
   html:
