@@ -4,7 +4,7 @@ author:
   - "Elia Giorgi/ Statistics and Data Science (blended)"
   - "Robin Vloeberghs / QASS"
   - "Hanqing Zhang / Statistics and Data Science (on campus)"
-  - "Student 4 / Programme"
+  - "Emmanuel Ochuba / QASS"
 format:
   html:
     toc: true
