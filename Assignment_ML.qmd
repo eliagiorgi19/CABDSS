@@ -53,9 +53,6 @@ library(rpart)
 
 ```
 
-
-
-
 ```{r}
 library(tidyverse)
 unzip("regions.zip") |> 
@@ -103,17 +100,11 @@ Answer:
 
 After being organized in groups with group_by(), which groups the data by its geographic features (regunit, region), a new column, n_resp, is added to the dataset with mutate(). n_resp thus holds the number of individual respondents per region. The output is once again piped into the pivot_longer() method.
 
-
-
-
-
 4. Consider the code above and explain the lines that are indicated with (4) in your own words.
 
 Answer: 
 
 pivot_longer() reshapes the structure of the dataframe, from "wide" to "long". The vector prepended with a negative sign indicates the columns which are not subject to this alteration. All other columns are thus collapsed into 2 columns: var and val. var takes on as values the name of the variable, and var takes its corresponding value. This expectedly reduces the horizontal length of the dataset and extends its vertical length. Once again, the output is piped into the next methof, drop_na().
-
-
 
 5. Consider the code above and explain the lines that are indicated with (5) in your own words.
 
@@ -121,7 +112,7 @@ Answer:
 
 drop_na() merely removes the entries of the resulting dataframe which contain missing values (NA). This only retains valid responses from the survey.
 
-6 (sic). Consider the code above and explain the lines that are indicated with (5) in your own words.
+6. Consider the code above and explain the lines that are indicated with (6) in your own words.
 
 Answer: 
 
@@ -140,10 +131,7 @@ head(df_regions)
 
 1. Perform principle component analysis on the df_regions data. Write the code in chunk 'pca_chunk'.
 
-
-
 ```{r, pca_chunk}
-print('hello pca')
 
 # We prepare the numeric data for PCA (excluding region identifiers). Note that we do not use across(), but instead we use dplyr's select and merely exclude the geographic variables that aren't relevant to standardization.
 pca_data <- df_regions |>
@@ -153,33 +141,23 @@ pca_data <- df_regions |>
 # PCA:
 pca_result <- prcomp(pca_data, center = TRUE, scale. = TRUE)
 summary(pca_result)
-```
 
-```{r, pca_chunk1}
 # Scree plot:
 plot(pca_result, type = "l", main = "Scree Plot of PCA")
-```
 
-```{r, pca_chunk2}
 # We can look into these tables to get the proportion of variance explained by each component
 pve <- summary(pca_result)$importance[2,]
 cumulative_pve <- summary(pca_result)$importance[3,]
 print(cumulative_pve)
 # This last line lets us see the proportion of cumulative variance that is accounted for by the PCs.
-```
 
-```{r, pca_chunk3}
 # We investigate the loadings of the PCA:
 loadings <- pca_result$rotation
 print(loadings[, 1:2])  # we only show the first 2 components
-```
 
-```{r, pca_chunk4}
 fviz_pca_var(pca_result, col.var = "contrib", gradient.cols = c("blue", "orange", "red"))
 # This here is a variable correlation plot, which shows how the variables relate with one another according to the first 2 PCs (which account for 80% of the variation in data). Positively correlated covariates are grouped together and share the same direction, whereas negatively correlated covariates are on opposite quadrants. Covariates at right angles from one another may be said to exhibit "independence" from one another. The length of the arrow (which also happens to be color coded) indicates how well the variable is represented by the principal components (PC1 and PC2)
-```
 
-```{r, pca_chunk5}
 # The following biplot serves merely as a corroborattion of these results:
 fviz_pca_biplot(pca_result, col.var = "contrib", gradient.cols = c("blue", "orange", "red"))
 ```
@@ -200,7 +178,7 @@ print(eigenvalues)
 We can thus conclusively choose to retain only the first 2 principal components.
 
 
-3. Discuss how you would like to label/interpret the retained principal(sic) components.
+3. Discuss how you would like to label/interpret the retained principal components.
 
 Answer:
 
@@ -238,8 +216,6 @@ Yes, since different scales of magnitude for the covariates may bias the results
 <!-- Tip: Consider adding the scores of the PC's to df_regions by: -->
 
 ```{r}
-#| eval: false
-#| echo: false
 
 n_pc<-2 #or any other number of PC's you want to retain
 # prcomp.res is the outcome of prcomp-function
@@ -255,7 +231,7 @@ df_regions |>
 
 1. Run k-means & hierarchical cluster analysis. Write the code in chunk 'cluster_chunk'.
 
-
+See code below.
 
 2. Would you prefer to run both analyses on the retained PC's or on the original set of observed variables? Argue.
 
@@ -304,10 +280,7 @@ The geospatial plot shows the different levels of PC1 across the several regions
 
 
 ```{r}
-#| eval: false
-#| echo: false
-#| 
-df_regions_pca_cl |> 
+df_regions_pca |> 
   full_join(giscoR::gisco_get_nuts(nuts_level = 'all',
                                    resolution="20",
                                    year = 2021),
@@ -336,8 +309,6 @@ ggplot(df_pca_cl)+
 
 
 ```{r, cluster_chunk}
-print('hello cluster')
-
 
 # K-MEANS
 
@@ -352,6 +323,8 @@ for(k in 1:10){
                                   betweenss=solution_k$betweenss))
 }
 
+# Again, we look for an elbow in the graph. This elbow clearly occurs at k=4. Beyond this amount of clusters, performance of k-means does not improve substantially enough by reducing variability within clusters (or, simultaneously, increasing variability between clusters): it is therefore parsimonious to set k=4.
+
 solution |> 
   pivot_longer(c(tot.withinss,betweenss),
                names_to = "stat",
@@ -360,16 +333,11 @@ solution |>
   geom_line(aes(x=k,y=value,color=stat))+
   scale_x_continuous(breaks=c(1:10))
 
-
-# Again, we look for an elbow in the graph. This elbow clearly occurs at k=4. Beyond this amount of clusters, performance of k-means does not improve substantially enough by reducing variability within clusters (or, simultaneously, increasing variability between clusters): it is therefore parsimonious to set k=4.
-
-
-
 # Use top 2 PCs for clustering
 df_kmeans <- as.data.frame(pca_result$x[, 1:2])
 set.seed(1)  # We set the randomness seed reproducibility
 
-kmeans_result <- kmeans(pca_scores, centers = 4, nstart = 25)
+kmeans_result <- kmeans(df_kmeans, centers = 4, nstart = 25)
 
 
 df_clusters <- df_regions |>
@@ -377,15 +345,10 @@ df_clusters <- df_regions |>
 
 
 # We visualize clustering results:
-
 fviz_cluster(list(data = df_kmeans, cluster = kmeans_result$cluster),
              geom = "point", ellipse.type = "convex",
              main = "K-means Clustering (PC1 & PC2)",
              repel = TRUE)
-
-
-# CLUSTERING
-
 
 # Compute distance matrix
 distMatrix <- dist(df_kmeans, method = "euclidean")
@@ -405,7 +368,6 @@ plot(hc, labels = df_regions$region,
      main = "Hierarchical Clustering Dendrogram",
      xlab = "", sub = "")
 rect.hclust(hc, k = 4, border = "blue")
-
 
 
 n_clus_hier <- 4 # or any other number of retained clusters (hierarchical)
@@ -443,10 +405,6 @@ ggplot(df_pca_cl)+
 ```
 
 
-
-
-
-         
 # Supervized machine learning
 
 * Solitude detection
@@ -493,11 +451,10 @@ First and foremost, we had a look at all features of the dataset. There appeared
 One thing which caught our eye were the categorical variables:
 Rather than opting for one-hot-encoding, which leads us to inflate the feature space, we used "factors" instead, which are convenient in R for regressions and are more memory-efficient. Considering that we have 7 possible values for mnactic and 5 possible values for domicil, this was clearly the most parsimonious approach.
 
-We then considered reversing the Likert scales for health, hlthhmp and hincfel, in a way that would be more intuitive to grasp (e.g. 1= poor health; 5= excellent health). Leaving these scales as they are, we believe, would have obfuscated their interpretation.
+We then considered reversing the Likert scales for health, hlthhmp and hincfel, in a way that would be more intuitive to grasp (e.g. 1 = poor health; 5 = excellent health). Leaving these scales as they are, we believe, would have obfuscated their interpretation.
 
 
 ```{r, wrangle}
-print("hello wrangle")
 
 df_solitude |> glimpse()
 attach(df_solitude)
@@ -512,9 +469,6 @@ df_solitude$domicil <- as.factor(df_solitude$domicil)
 # We considered reversing the Likert scales for health, hlthhmp and hincfel, which would be more intuitive to grasp (e.g. 1= poor health; 5= excellent health). Leaving these scales as they are, we believe, would obfuscate our interpretation.
 
 df_solitude |>  mutate(across(c(health), ~ 6 - .))  |>  mutate(across(c(aesfdrk, hincfel), ~ 5 - .))
-
-
-
 ```
 
 2. Split, train and assess supervised machine learning algorithms and select the best solution. Describe the different steps and decisions you took. When there is discussion in your group about the right decision, briefly describe the different (opposing) opinions. Code this steps in the 'wrangle'-chunk.
@@ -532,8 +486,6 @@ We finally implemented a visualization of the model's ROC curve, and returned it
 
 
 ```{r, ML}
-<<<<<<< HEAD
-
 
 set.seed(222)  # We set a random seed for the random number generator, for reproducibility of our results
 
@@ -553,6 +505,7 @@ confusion <- table(as.numeric(phat>0.5),
 
 
 caret::confusionMatrix(table(as.numeric(predict(m.logistic, valid, type = 'response')>0.5), valid$lonely_obs), positive="1")
+
 
 ROCR::prediction(as.numeric(phat),valid$lonely_obs) |> 
   ROCR::performance("tpr","fpr")->
@@ -659,10 +612,3 @@ print(glue::glue("Cloglog AUC: {round(auc@y.values[[1]],4)}"))
 The results of this attempt do not provide significant improvements in prediction. The AUC has remained the same (only increasing by a very minute amount), and what's more frustrating about the cloglog link function is the lack of ease when it comes to the interpretability of the model coefficients. We thus retain our conclusions from the model which used a logit link function.
 
 
-
-
-
-=======
-print("hello machine learning")
-```
->>>>>>> 15f706e73ab30a75a194865a21390f73ccda2805
