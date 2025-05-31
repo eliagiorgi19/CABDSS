@@ -153,31 +153,35 @@ pca_data <- df_regions |>
 # PCA:
 pca_result <- prcomp(pca_data, center = TRUE, scale. = TRUE)
 summary(pca_result)
+```
 
+```{r, pca_chunk1}
 # Scree plot:
 plot(pca_result, type = "l", main = "Scree Plot of PCA")
+```
 
+```{r, pca_chunk2}
 # We can look into these tables to get the proportion of variance explained by each component
 pve <- summary(pca_result)$importance[2,]
 cumulative_pve <- summary(pca_result)$importance[3,]
 print(cumulative_pve)
 # This last line lets us see the proportion of cumulative variance that is accounted for by the PCs.
+```
 
-
+```{r, pca_chunk3}
 # We investigate the loadings of the PCA:
 loadings <- pca_result$rotation
 print(loadings[, 1:2])  # we only show the first 2 components
+```
 
-
-
+```{r, pca_chunk4}
 fviz_pca_var(pca_result, col.var = "contrib", gradient.cols = c("blue", "orange", "red"))
 # This here is a variable correlation plot, which shows how the variables relate with one another according to the first 2 PCs (which account for 80% of the variation in data). Positively correlated covariates are grouped together and share the same direction, whereas negatively correlated covariates are on opposite quadrants. Covariates at right angles from one another may be said to exhibit "independence" from one another. The length of the arrow (which also happens to be color coded) indicates how well the variable is represented by the principal components (PC1 and PC2)
+```
 
-
+```{r, pca_chunk5}
 # The following biplot serves merely as a corroborattion of these results:
 fviz_pca_biplot(pca_result, col.var = "contrib", gradient.cols = c("blue", "orange", "red"))
-
-
 ```
 
 2. Discuss and decide how many principal components you wish to retain.
@@ -205,9 +209,14 @@ To appropriately interpret the retained principal components, we investigate the
 ```{r}
 loadings <- pca_result$rotation
 print(loadings[, 1:2])
+```
 
+```{r}
 print("Loadings for PC1:")
 sort(loadings[, "PC1"], decreasing = FALSE) # Since for PC1, all loadings have a negative sign
+```
+
+```{r}
 print("Loadings for PC2:")
 sort(loadings[, "PC2"], decreasing = TRUE) # Since some loadings have positive signs for PC2
 ```
@@ -268,13 +277,13 @@ Just like with PCA, standardizing the variables is important to accomplish befor
 
 Answer:
 
-No, since the standardization has already occurred before running the PCA, from which the principal components were yielded. The scale of each of the principal components should normally reflect the true magnitude of one of the uncorrelated dimensions which constitute the data, and are thus informative as such. Standardizing principal components would be ill-advised, since this would dillute the magnitude of some of these components and merely replace information with noise.
+No, since the standardization has already occurred before running the PCA, from which the principal components were yielded. The scale of each of the principal components should normally reflect the true magnitude of one of the uncorrelated dimensions which constitute the data, and are thus informative as such. Standardizing principal components would be ill-advised, since this would dilute the magnitude of some of these components and merely replace information with noise.
 
 5. How many clusters of regions do you wish to retain? Argue.
 
 Answer:
 
-We choose to retain 4 clusters. Our motivation lies in the "elbow" we can observe in our graph where we plot the within-cluster sum of squares (withinss) and the between-cluster sum of squares (betweenss) against the number of clusters (k). Additional clusters does not translate to substantial increase in between variance (betweenss) or to substantial decrease in within variance (withinss) 
+We choose to retain 4 clusters. Our motivation lies in the "elbow" we can observe in our graph where we plot the within-cluster sum of squares (within SS) and the between-cluster sum of squares (between SS) against the number of clusters (k). Additional clusters does not translate to substantial increase in between variance (between SS) or to substantial decrease in within variance (within SS) 
 
 5. Interpret the clusters you retained.
 
