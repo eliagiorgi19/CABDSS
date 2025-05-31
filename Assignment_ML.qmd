@@ -48,6 +48,8 @@ Variables:
 
 library(dplyr)
 library(factoextra)
+library(caret)
+library(rpart)
 
 ```
 
@@ -439,7 +441,7 @@ ggplot(df_pca_cl)+
 # Supervized machine learning
 
 * Solitude detection
-* This analysis seeks to identify individuals who report to be lonely. This intrument could be used by social organisations to predict people's risk of being lonely, after completing a short questionnaire.
+* This analysis seeks to identify individuals who report to be lonely. This instrument could be used by social organisations to predict people's risk of being lonely, after completing a short questionnaire.
 
 Download the 'solitude.zip' file from the 'datasets' chapter and save it in the directory of this file ("Assignment_ML.qmd").
 
@@ -478,12 +480,175 @@ unzip("solitude.zip") |>
 
 Answer: 
 
+First and foremost, we had a look at all features of the dataset. There appeared to be no missing values, which conspicuously alleviated our wrangling routines.
+One thing which caught our eye were the categorical variables:
+Rather than opting for one-hot-encoding, which leads us to inflate the feature space, we used "factors" instead, which are convenient in R for regressions and are more memory-efficient. Considering that we have 7 possible values for mnactic and 5 possible values for domicil, this was clearly the most parsimonious approach.
+
+We then considered reversing the Likert scales for health, hlthhmp and hincfel, in a way that would be more intuitive to grasp (e.g. 1= poor health; 5= excellent health). Leaving these scales as they are, we believe, would have obfuscated their interpretation.
+
+
 ```{r, wrangle}
 print("hello wrangle")
+
+df_solitude |> glimpse()
+attach(df_solitude)
+
+# We saw that there were no missing values -> no actions taken
+
+df_solitude$mnactic <- as.factor(df_solitude$mnactic)
+df_solitude$domicil <- as.factor(df_solitude$domicil)
+
+# Rather than opting for one-hot-encoding, which leads us to inflate the feature space, we use "factors" instead, which are convenient in R for regressions and are more memory-efficient. Considering that we have 7 possible values for mnactic and 5 possible values for domicil, this was clearly the approach to take.
+
+# We considered reversing the Likert scales for health, hlthhmp and hincfel, which would be more intuitive to grasp (e.g. 1= poor health; 5= excellent health). Leaving these scales as they are, we believe, would obfuscate our interpretation.
+
+df_solitude |>  mutate(across(c(health), ~ 6 - .))  |>  mutate(across(c(aesfdrk, hincfel), ~ 5 - .))
+
+
+
 ```
 
-2. Split, train and assess supervised machine learning algorithms and select the best solution. Describe the different steps and decisions you took. When there is discussion in your group about the right decision, briefly describe the different (opposing) opinions. Code this steps in the 'wrangle'-chunck.
+2. Split, train and assess supervised machine learning algorithms and select the best solution. Describe the different steps and decisions you took. When there is discussion in your group about the right decision, briefly describe the different (opposing) opinions. Code this steps in the 'wrangle'-chunk.
+
+
+ANSWER:
+
+One of the first points of debate regarded defining the proportion of training and test sets.
+Considering that df_solitude consists of 37775 entries, we believe it is safe to split the data with a 30% allocation to test and a 70% allocation to training. If the sample had been smaller, we may have considered adopting a 20% - 80% ratio instead, to minimize the possibility of undertraining.
+
+Then, we considered that a useful understanding the causes of loneliness could be best achieved by implementing a predictive model that could allow for inference on individual covariates, along with a dimension of interpretability. It was thereby agreed to opt for logistic regression, as it provided such elements.
+
+We finally implemented a visualization of the model's ROC curve, and returned its associated AUC.
+
+
 
 ```{r, ML}
-print("hello machine learning")
+
+
+set.seed(222)  # We set a random seed for the random number generator, for reproducibility of our results
+
+split<-rsample::initial_split(df_solitude,prop = 0.7)
+train<-rsample::training(split)
+valid<-rsample::testing(split)
+
+m.logistic <- glm(lonely_obs ~ .,
+                  data=train,
+                  family=binomial(link="logit"))
+
+phat<-predict(m.logistic, valid, type = 'response')
+
+confusion <- table(as.numeric(phat>0.5), 
+                   valid$lonely_obs)
+
+
+
+caret::confusionMatrix(table(as.numeric(predict(m.logistic, valid, type = 'response')>0.5), valid$lonely_obs), positive="1")
+
+ROCR::prediction(as.numeric(phat),valid$lonely_obs) |> 
+  ROCR::performance("tpr","fpr")->
+  roc
+
+plotly::plot_ly(type="scatter",
+                mode="lines",
+                x=~roc@x.values[[1]],
+                y=~roc@y.values[[1]],
+                name='logistic',
+                text=~paste("<br> fpr (1-specificity)",round(roc@x.values[[1]],2),
+                            "<br> tpr (sensitivity)",round(roc@y.values[[1]],2),
+                            "<br> cutoff",round(roc@alpha.values[[1]],2)),
+                hoverinfo='text') |> 
+  plotly::add_trace(x=~roc@x.values[[1]],
+                    y=~roc@x.values[[1]],
+                    hoverinfo="none",
+                    name='no model') |> 
+  plotly::layout(xaxis=list(title="1-Specificty: false positive rate: FP / (FP + TN))"),
+                 yaxis=list(title="Recall/Sensitivity: true positive rate: TP / (TP + FN)"))
+
+
+ROCR::prediction(as.numeric(phat),valid$lonely_obs) |> 
+  ROCR::performance("auc")->
+  auc
+
+print(glue::glue("Logit AUC: {round(auc@y.values[[1]],4)}"))
+
+summary(m.logistic)
+
 ```
+
+
+
+
+Our logistic regression has yielded an AUC of 0.7086 (area under the ROC curve), which is reasonably decent, or at the very least acceptable for a predictive model.
+We can also show interesting results when it comes to individual coefficients, which are interpreted as impacting the log odds of yielding a "1" value for lonely_obs.
+
+Almost all coefficients appeared to be statistically significant.
+The strongest impacting factors of loneliness include (in decreasing orders of magnitude, and all very statistically significant):
+- Living comfortably on present household income (-> hincfel)
+- not being retired or not working a job (-> mnacticRetired, mnacticPaidWork)
+- feeling healthier subjectively (-> hlthhmp)
+- having less people around in one's household (-> hhmmb)
+- investing more trust in others (-> trust_other)
+- not being a man (-> male)
+
+
+
+
+
+As a final additional effort of investigation, we considered applying a different link function (which would substitute logit): since there are much less "1" observations for the dependent variable lonely_obs than "0" observations (31.28% of "1" values), we believed that this asymmetry in the distribution of outcome values could best be fitted with a sigmoid function that is much more sensible to covariates as the outcome approaches "1". Such a sigmoid function is found in the cloglog (complementary log-log) link function.
+
+
+
+
+```{r}
+
+
+m.cloglog <- glm(lonely_obs ~ .,
+                  data=train,
+                  family=binomial(link="cloglog"))
+
+phat_cloglog<-predict(m.cloglog, valid, type = 'response')
+
+confusion_cloglog <- table(as.numeric(phat_cloglog>0.5), 
+                   valid$lonely_obs)
+
+
+
+caret::confusionMatrix(table(as.numeric(predict(m.cloglog, valid, type = 'response')>0.5), valid$lonely_obs), positive="1")
+
+ROCR::prediction(as.numeric(phat_cloglog),valid$lonely_obs) |> 
+  ROCR::performance("tpr","fpr")->
+  roc
+
+plotly::plot_ly(type="scatter",
+                mode="lines",
+                x=~roc@x.values[[1]],
+                y=~roc@y.values[[1]],
+                name='cloglog logistic',
+                text=~paste("<br> fpr (1-specificity)",round(roc@x.values[[1]],2),
+                            "<br> tpr (sensitivity)",round(roc@y.values[[1]],2),
+                            "<br> cutoff",round(roc@alpha.values[[1]],2)),
+                hoverinfo='text') |> 
+  plotly::add_trace(x=~roc@x.values[[1]],
+                    y=~roc@x.values[[1]],
+                    hoverinfo="none",
+                    name='no model') |> 
+  plotly::layout(xaxis=list(title="1-Specificty: false positive rate: FP / (FP + TN))"),
+                 yaxis=list(title="Recall/Sensitivity: true positive rate: TP / (TP + FN)"))
+
+
+ROCR::prediction(as.numeric(phat_cloglog),valid$lonely_obs) |> 
+  ROCR::performance("auc")->
+  auc
+
+print(glue::glue("Cloglog AUC: {round(auc@y.values[[1]],4)}"))
+```
+
+
+
+
+The results of this attempt do not provide significant improvements in prediction. The AUC has remained the same (only increasing by a very minute amount), and what's more frustrating about the cloglog link function is the lack of ease when it comes to the interpretability of the model coefficients. We thus retain our conclusions from the model which used a logit link function.
+
+
+
+
+
