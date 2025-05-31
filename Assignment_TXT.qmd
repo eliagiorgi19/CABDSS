@@ -87,7 +87,13 @@ using regular expressions to remove personal details, punctuation, headers, etc.
 
 Answer: 
 
+The analysis we propose is Latent Dirichlet Analysis (LDA). LDA is an explorative analysis which allows to uncover the most common topics in the articles. As input, LDA requires the Document-Term-Matrix, which indicates how often specific words occur in a document. LDA will then output the per-document topic proportions and the per-topic word distribution. Especially the latter is of interest as it displays the topics and how they relate to specific words. By interpreting these proportions we can derive what these topics could be. For instance, if a certain topic has a high proportion for the words 'army', 'Russia', 'threat', and 'safety', then we could interpret this topic as 'war'. Since we do not know beforehand how many topics we can reveal we will run the LDA estimation procedure with a varying number of topics and select the best model based on a model metric such as perplexity, while trying to aim for an interpretable number of topics. 
+
+Note that a first sight Visbility Analysis (VA) might seem a good candidate, as it counts how often words (and thus topics) occur in articles. However, VA requires an a priori defined lists with all the words, their synonyms, and even abbreviations. For our case, this is rather problematic since we do not know which topics (and thus all the related words) are present. We could decide on some topics such as for example war or economy but if any topic in the articles is not represented in our list then we will miss this completely and make false inferences. A final argument against VA is that creating this list requires a lot of effort and time, and comes with many researcher's degrees of freedom. However, VA could still be useful as a confirmatory approach, if needed, after we have an idea of the topics present in the articles using LDA. 
+
 7b. Which of the following concepts is important for your analysis? Argue.
 
 * Document-Term-Matrix
 * Dictionary approach
+
+The relevant concept for our analysis (Latent Dirichlet Analysis; LDA) is the Document-Term-Matrix, which lists the occurrences of words per document, and is used as input for LDA. The Dictionary approach encompasses analyses such as the visibility analysis or the sentiment analysis, and is not applicable to our case when using LDA. 
