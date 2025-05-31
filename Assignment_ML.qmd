@@ -1,10 +1,10 @@
 ---
 title: "Assignment (un)supervized machine learning"
 author: 
-  - "Elia GIORGI/ Statistics and Data Science (blended)"
-  - "Student 2 / Programme"
-  - "Student 3 / Programme"
-  - "Student 4 / Programme"
+  - "Elia Giorgi/ Statistics and Data Science (blended)"
+  - "Robin Vloeberghs / QASS"
+  - "Hanqing Zhang / Statistics and Data Science (on campus)"
+  - "Emmanuel Ochuba / QASS"
 format:
   html:
     toc: true
@@ -523,6 +523,7 @@ We finally implemented a visualization of the model's ROC curve, and returned it
 
 
 ```{r, ML}
+<<<<<<< HEAD
 
 
 set.seed(222)  # We set a random seed for the random number generator, for reproducibility of our results
@@ -652,3 +653,7 @@ The results of this attempt do not provide significant improvements in predictio
 
 
 
+=======
+print("hello machine learning")
+```
+>>>>>>> 15f706e73ab30a75a194865a21390f73ccda2805
