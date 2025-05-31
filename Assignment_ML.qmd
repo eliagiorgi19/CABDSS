@@ -267,10 +267,13 @@ Answer:
 
 Looking at the k-means clustering plot across the PC1-PC2 grid, most clusters seem to aggregate in the lower quadrants, where PC2 assumes negative values. 
 
-  - Cluster 1 (in red): lower-right quadrant, groups individuals negatively associated with PC2 and positively associated with PC1, namely individuals that are strictly unsupportive of homosexuals' rights (and show little trust in institutions).
+  - Cluster 1 (in red): mostly upper-left quadrant, groups individuals associated with trst* variables, indicating trust in the institutions.
+  
   - Cluster 2 (in green): mostly lower-left quadrant, groups individuals associated with eq* variables, indicating support of equal treatment and opportunities for male and female sexes.
+  
   - Cluster 3 (in blue):  upper-right quadrant, groups individuals positively associated with both PC1 and PC2, namely individuals that are simultaneously unsupportive of homosexuals' rights and appear to trust legal/political institutions.
-  - Cluster 4 (in purple): mostly upper-left quadrant, groups individuals associated with trst* variables, indicating trust in the institutions.
+  
+- Cluster 4 (in purple): lower-right quadrant, groups individuals negatively associated with PC2 and positively associated with PC1, namely individuals that are strictly unsupportive of homosexuals' rights (and show little trust in institutions).
 
 
 The geospatial plot shows the different levels of PC1 across the several regions listed in the dataset. One can clearly see that higher levels of PC1 are more often found in the eastern countries and regions of the EU, whereas the northernmost countries and regions appear to record the lowest levels of PC1.
